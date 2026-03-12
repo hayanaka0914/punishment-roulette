@@ -107,13 +107,11 @@ function RouletteWheel({
   rotation,
   spinning,
   large = false,
-  highlightIndex,
 }: {
   options: { label: string; highlight?: boolean }[];
   rotation: number;
   spinning: boolean;
   large?: boolean;
-  highlightIndex?: number | null;
 }) {
   const size = 420;
   const center = size / 2;
@@ -129,8 +127,7 @@ function RouletteWheel({
       const textRadius = radius * 0.66;
       const textPoint = polarToCartesian(center, center, textRadius, middleAngle);
       const lines = splitLabel(option.label || "未入力");
-      const isSelected = highlightIndex === index;
-      const isDark = option.highlight || isSelected;
+      const isDark = option.highlight;
 
       return {
         index,
@@ -143,7 +140,7 @@ function RouletteWheel({
         textColor: isDark ? "#ffffff" : "#111827",
       };
     });
-  }, [options, step, highlightIndex]);
+  }, [options, step]);
 
   return (
     <div className="flex flex-col items-center">
@@ -204,7 +201,6 @@ export default function Page() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [resultFlash, setResultFlash] = useState(false);
-  const [lastMainWinnerIndex, setLastMainWinnerIndex] = useState<number | null>(null);
   const [lastBigWinnerIndex, setLastBigWinnerIndex] = useState<number | null>(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -374,7 +370,6 @@ export default function Page() {
 
       if (winner.isBoss) {
         playResultSound(true);
-        setLastMainWinnerIndex(winnerIndex);
         setResult("大罰ゲームへ進みます");
         window.setTimeout(() => {
           setResult("");
@@ -382,7 +377,6 @@ export default function Page() {
         }, 1300);
       } else {
         playResultSound(false);
-        setLastMainWinnerIndex(winnerIndex);
         setResult(`結果：${winner.text || "未入力"}`);
       }
     }, 4600);
@@ -406,7 +400,6 @@ export default function Page() {
       setSpinning(false);
       flashResult();
       playResultSound(true);
-      setLastBigWinnerIndex(winnerIndex);
       setResult(`結果：${winner.text || "未入力"}`);
     }, 4600);
   };
@@ -475,15 +468,13 @@ export default function Page() {
     setScreen("main");
     setMainRotation(0);
     setBigRotation(0);
-    setLastMainWinnerIndex(null);
-    setLastBigWinnerIndex(null);
+    
   };
 
   const currentWheelOptions = screen === "main"
     ? mainOptions.map((option) => ({ label: option.text || (option.isBoss ? "大罰ゲームへ" : "未入力"), highlight: option.isBoss }))
     : bigOptions.map((option) => ({ label: option.text || "未入力" }));
   const currentRotation = screen === "main" ? mainRotation : bigRotation;
-  const currentHighlightIndex = screen === "main" ? lastMainWinnerIndex : lastBigWinnerIndex;
 
   return (
     <main className="min-h-screen bg-gray-100 text-gray-900">
@@ -499,7 +490,7 @@ export default function Page() {
           </div>
 
           <div className="w-full max-w-5xl rounded-[32px] bg-white p-4 shadow-xl sm:p-8">
-            <RouletteWheel options={currentWheelOptions} rotation={currentRotation} spinning={spinning} large highlightIndex={currentHighlightIndex} />
+            <RouletteWheel options={currentWheelOptions} rotation={currentRotation} spinning={spinning} large />
 
             <div className={`mx-auto mt-6 w-full max-w-3xl rounded-3xl px-5 py-5 text-center shadow transition ${resultFlash ? "scale-[1.02] bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}>
               {result ? <p className="text-xl font-bold sm:text-3xl">{result}</p> : <p className="text-lg font-semibold text-gray-500 sm:text-2xl"> </p>}
@@ -578,7 +569,7 @@ export default function Page() {
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-3xl bg-white p-4 shadow-xl sm:p-6">
             <div className="flex flex-col items-center">
-              <RouletteWheel options={currentWheelOptions} rotation={currentRotation} spinning={spinning} highlightIndex={currentHighlightIndex} />
+              <RouletteWheel options={currentWheelOptions} rotation={currentRotation} spinning={spinning} />
 
               <div className={`mt-6 w-full max-w-xl rounded-2xl p-4 text-center transition ${resultFlash ? "bg-black text-white scale-[1.02]" : "bg-gray-100 text-gray-900"}`}>
                 {result ? (
