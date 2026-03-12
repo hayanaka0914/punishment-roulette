@@ -18,9 +18,9 @@ type DeferredInstallPrompt = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
-const MAIN_STORAGE_KEY = "punishment_main_options_v3";
-const BIG_STORAGE_KEY = "punishment_big_options_v3";
-const SOUND_STORAGE_KEY = "punishment_sound_enabled_v1";
+const MAIN_STORAGE_KEY = "punishment_main_options_v4";
+const BIG_STORAGE_KEY = "punishment_big_options_v4";
+const SOUND_STORAGE_KEY = "punishment_sound_enabled_v2";
 
 const defaultMainOptions: MainOption[] = [
   { id: 1, text: "腕立て10回", isBoss: false },
@@ -39,14 +39,14 @@ const defaultBigOptions: BigOption[] = [
 ];
 
 const wheelColors = [
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#22c55e",
-  "#06b6d4",
-  "#3b82f6",
-  "#8b5cf6",
-  "#ec4899",
+  "#f3f4f6",
+  "#e5e7eb",
+  "#d1d5db",
+  "#9ca3af",
+  "#f3f4f6",
+  "#e5e7eb",
+  "#d1d5db",
+  "#9ca3af",
 ];
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
@@ -144,17 +144,17 @@ function RouletteWheel({
   return (
     <div className="flex flex-col items-center">
       <div className={`relative w-full ${large ? "max-w-[92vw] sm:max-w-[760px]" : "max-w-[380px] sm:max-w-[430px]"}`}>
-        <div className="absolute left-1/2 top-[-8px] z-30 h-0 w-0 -translate-x-1/2 rotate-180 border-l-[20px] border-r-[20px] border-b-[32px] border-l-transparent border-r-transparent border-b-slate-950 drop-shadow-lg" />
+        <div className="absolute left-1/2 top-[-8px] z-30 h-0 w-0 -translate-x-1/2 rotate-180 border-l-[20px] border-r-[20px] border-b-[32px] border-l-transparent border-r-transparent border-b-black" />
 
         <div
-          className="relative aspect-square w-full rounded-full border-[8px] border-white bg-white shadow-2xl sm:border-[10px]"
+          className="relative aspect-square w-full rounded-full border-[8px] border-white bg-white shadow-xl sm:border-[10px]"
           style={{
             transform: `rotate(${rotation}deg)`,
             transition: spinning ? "transform 4.6s cubic-bezier(0.14, 0.88, 0.18, 1)" : "none",
           }}
         >
           <svg viewBox={`0 0 ${size} ${size}`} className="h-full w-full rounded-full">
-            <circle cx={center} cy={center} r={radius} fill="#0f172a" opacity="0.06" />
+            <circle cx={center} cy={center} r={radius} fill="#f9fafb" />
 
             {slices.map((slice) => (
               <g key={`${slice.label}-${slice.index}`}>
@@ -168,8 +168,8 @@ function RouletteWheel({
                       textAnchor="middle"
                       dominantBaseline="middle"
                       fontSize={large ? "15" : "14"}
-                      fontWeight="800"
-                      fill="#0f172a"
+                      fontWeight="700"
+                      fill="#111827"
                     >
                       {line}
                     </text>
@@ -178,7 +178,7 @@ function RouletteWheel({
               </g>
             ))}
 
-            <circle cx={center} cy={center} r="22" fill="#ffffff" stroke="#cbd5e1" strokeWidth="3" />
+            <circle cx={center} cy={center} r="22" fill="#ffffff" stroke="#d1d5db" strokeWidth="3" />
           </svg>
         </div>
       </div>
@@ -368,7 +368,7 @@ export default function Page() {
 
       if (winner.isBoss) {
         playResultSound(true);
-        setResult("💀 大罰ゲームへ進みます…");
+        setResult("大罰ゲームへ進みます");
         if (navigator.vibrate) navigator.vibrate([100, 60, 100]);
         window.setTimeout(() => {
           setResult("");
@@ -376,7 +376,7 @@ export default function Page() {
         }, 1300);
       } else {
         playResultSound(false);
-        setResult(`🎯 結果：${winner.text || "未入力"}`);
+        setResult(`結果：${winner.text || "未入力"}`);
         if (navigator.vibrate) navigator.vibrate(80);
       }
     }, 4600);
@@ -400,7 +400,7 @@ export default function Page() {
       setSpinning(false);
       flashResult();
       playResultSound(true);
-      setResult(`🔥 大罰ゲーム決定：${winner.text || "未入力"}`);
+      setResult(`結果：${winner.text || "未入力"}`);
       if (navigator.vibrate) navigator.vibrate([150, 70, 150]);
     }, 4600);
   };
@@ -411,40 +411,16 @@ export default function Page() {
       const choice = await installPrompt.userChoice;
       setInstallMessage(
         choice.outcome === "accepted"
-          ? "ホーム画面への追加が完了しました。"
-          : "インストールはキャンセルされました。あとでまた追加できます。"
+          ? "ホーム画面に追加しました"
+          : "追加はキャンセルされました"
       );
       setInstallPrompt(null);
       return;
     }
 
     setInstallMessage(
-      "iPhone / iPad は共有メニューから『ホーム画面に追加』、Android Chrome はブラウザメニューまたは画面内のインストール案内から追加してください。"
+      "iPhone / iPad は共有メニューから『ホーム画面に追加』、Android Chrome はブラウザメニューから追加してください。"
     );
-  };
-
-  const shareSite = async () => {
-    const shareText = `${result || "罰ゲームルーレットで遊ぼう"}\n${window.location.href}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "罰ゲームルーレット",
-          text: result || "罰ゲームルーレットで遊ぼう",
-          url: window.location.href,
-        });
-        return;
-      } catch {
-        // ignore
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareText);
-      setInstallMessage("シェア用テキストをコピーしました。SNSやLINEにそのまま貼れます。");
-    } catch {
-      setInstallMessage("シェア機能が使えませんでした。URLを手動でコピーしてください。");
-    }
   };
 
   const updateMainText = (id: number, text: string) => {
@@ -499,27 +475,23 @@ export default function Page() {
   const currentRotation = screen === "main" ? mainRotation : bigRotation;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e293b,_#0f172a_55%,_#020617)] text-white">
+    <main className="min-h-screen bg-gray-100 text-gray-900">
       {showFullscreen && (
-        <div className="fixed inset-0 z-50 flex min-h-screen flex-col items-center justify-center overflow-auto bg-[radial-gradient(circle_at_top,_#7f1d1d,_#111827_38%,_#020617)] p-4">
+        <div className="fixed inset-0 z-50 flex min-h-screen flex-col items-center justify-center overflow-auto bg-white p-4">
           <div className="mb-4 flex w-full max-w-5xl items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Show Mode</p>
-              <h2 className="text-2xl font-black sm:text-4xl">{screen === "main" ? "罰ゲームルーレット" : "大罰ゲームルーレット"}</h2>
-            </div>
             <button
               onClick={() => setShowFullscreen(false)}
-              className="min-h-[48px] rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-base font-bold backdrop-blur"
+              className="min-h-[48px] rounded-2xl border border-gray-300 bg-white px-5 py-3 text-base font-semibold"
             >
               閉じる
             </button>
           </div>
 
-          <div className="w-full max-w-5xl rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur sm:p-8">
+          <div className="w-full max-w-5xl rounded-[32px] bg-white p-4 shadow-xl sm:p-8">
             <RouletteWheel options={currentTexts} rotation={currentRotation} spinning={spinning} large />
 
-            <div className={`mx-auto mt-6 w-full max-w-3xl rounded-3xl px-5 py-5 text-center shadow-xl transition ${resultFlash ? "scale-[1.03] bg-amber-300 text-slate-950" : "bg-white text-slate-950"}`}>
-              {result ? <p className="text-xl font-black sm:text-3xl">{result}</p> : <p className="text-lg font-bold text-slate-500 sm:text-2xl">画面いっぱいで盛り上げよう</p>}
+            <div className={`mx-auto mt-6 w-full max-w-3xl rounded-3xl px-5 py-5 text-center shadow transition ${resultFlash ? "scale-[1.02] bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}>
+              {result ? <p className="text-xl font-bold sm:text-3xl">{result}</p> : <p className="text-lg font-semibold text-gray-500 sm:text-2xl"> </p>}
             </div>
 
             <div className="mx-auto mt-5 flex w-full max-w-3xl flex-col gap-3 sm:flex-row">
@@ -527,7 +499,7 @@ export default function Page() {
                 <button
                   onClick={spinMain}
                   disabled={!canSpinMain || spinning}
-                  className="min-h-[58px] flex-1 rounded-2xl bg-amber-400 px-5 py-4 text-lg font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-500"
+                  className="min-h-[58px] flex-1 rounded-2xl bg-black px-5 py-4 text-lg font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
                 >
                   {spinning ? "回転中..." : "回す"}
                 </button>
@@ -536,16 +508,16 @@ export default function Page() {
                   <button
                     onClick={spinBig}
                     disabled={!canSpinBig || spinning}
-                    className="min-h-[58px] flex-1 rounded-2xl bg-rose-500 px-5 py-4 text-lg font-black text-white disabled:cursor-not-allowed disabled:bg-slate-500"
+                    className="min-h-[58px] flex-1 rounded-2xl bg-black px-5 py-4 text-lg font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
                   >
-                    {spinning ? "回転中..." : "大罰ゲームを決める"}
+                    {spinning ? "回転中..." : "回す"}
                   </button>
                   <button
                     onClick={() => {
                       setScreen("main");
                       setResult("");
                     }}
-                    className="min-h-[58px] rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-lg font-black"
+                    className="min-h-[58px] rounded-2xl border border-gray-300 bg-white px-5 py-4 text-lg font-semibold"
                   >
                     戻る
                   </button>
@@ -557,61 +529,51 @@ export default function Page() {
       )}
 
       <div className="mx-auto max-w-6xl p-4 pb-10 sm:p-6">
-        <div className="mb-4 rounded-3xl border border-white/10 bg-white/10 p-4 shadow-sm backdrop-blur sm:p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Buzz Mode Roulette</p>
-          <h1 className="mt-2 text-3xl font-black sm:text-4xl">
-            {screen === "main" ? "罰ゲームルーレット" : "大罰ゲームルーレット"}
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-200 sm:text-base">
-            音・振動・全画面表示・シェアを入れて、みんなの前で見せても盛り上がる仕様に強化しました。全画面表示にすると、ルーレットだけを大きく出せます。
-          </p>
-
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <div className="mb-4 rounded-3xl bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button
               onClick={() => setShowFullscreen(true)}
-              className="min-h-[48px] rounded-2xl bg-amber-400 px-5 py-3 text-base font-black text-slate-950"
+              className="min-h-[48px] rounded-2xl bg-black px-5 py-3 text-base font-bold text-white"
             >
-              ルーレットだけ全画面表示
+              全画面表示
             </button>
             <button
               onClick={() => setSoundEnabled((prev) => !prev)}
-              className="min-h-[48px] rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-base font-bold"
+              className="min-h-[48px] rounded-2xl border border-gray-300 bg-white px-5 py-3 text-base font-semibold"
             >
-              {soundEnabled ? "音をOFFにする" : "音をONにする"}
-            </button>
-            <button
-              onClick={shareSite}
-              className="min-h-[48px] rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-base font-bold"
-            >
-              結果やURLをシェア
+              {soundEnabled ? "音をOFF" : "音をON"}
             </button>
             <button
               onClick={handleInstallClick}
-              className="min-h-[48px] rounded-2xl border border-emerald-300/30 bg-emerald-500/20 px-5 py-3 text-base font-bold text-emerald-100"
+              className="min-h-[48px] rounded-2xl border border-gray-300 bg-white px-5 py-3 text-base font-semibold"
             >
               ホーム画面に追加
+            </button>
+            <button
+              onClick={resetAll}
+              className="min-h-[48px] rounded-2xl border border-gray-300 bg-white px-5 py-3 text-base font-semibold"
+            >
+              リセット
             </button>
           </div>
 
           {installMessage && (
-            <p className="mt-3 rounded-2xl bg-white/10 px-4 py-3 text-sm leading-6 text-slate-100">
+            <p className="mt-3 rounded-2xl bg-gray-100 px-4 py-3 text-sm leading-6 text-gray-700">
               {installMessage}
             </p>
           )}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <section className="rounded-3xl border border-white/10 bg-white/10 p-4 shadow-xl backdrop-blur sm:p-6">
+          <section className="rounded-3xl bg-white p-4 shadow-xl sm:p-6">
             <div className="flex flex-col items-center">
               <RouletteWheel options={currentTexts} rotation={currentRotation} spinning={spinning} />
 
-              <div className={`mt-6 w-full max-w-xl rounded-2xl p-4 text-center transition ${resultFlash ? "bg-amber-300 text-slate-950 scale-[1.02]" : "bg-white text-slate-950"}`}>
+              <div className={`mt-6 w-full max-w-xl rounded-2xl p-4 text-center transition ${resultFlash ? "bg-black text-white scale-[1.02]" : "bg-gray-100 text-gray-900"}`}>
                 {result ? (
-                  <p className="text-lg font-black sm:text-2xl">{result}</p>
+                  <p className="text-lg font-bold sm:text-2xl">{result}</p>
                 ) : (
-                  <p className="text-sm text-slate-500 sm:text-base">
-                    {screen === "main" ? "通常ルーレットを回してください" : "大罰ゲームルーレットを回してください"}
-                  </p>
+                  <p className="text-sm text-gray-500 sm:text-base"> </p>
                 )}
               </div>
 
@@ -620,47 +582,28 @@ export default function Page() {
                   <button
                     onClick={spinMain}
                     disabled={!canSpinMain || spinning}
-                    className="min-h-[54px] flex-1 rounded-2xl bg-amber-400 px-5 py-3 text-base font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-500"
+                    className="min-h-[54px] flex-1 rounded-2xl bg-black px-5 py-3 text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
                   >
-                    {spinning ? "回転中..." : "通常ルーレットを回す"}
+                    {spinning ? "回転中..." : "回す"}
                   </button>
                 ) : (
                   <>
                     <button
                       onClick={spinBig}
                       disabled={!canSpinBig || spinning}
-                      className="min-h-[54px] flex-1 rounded-2xl bg-rose-500 px-5 py-3 text-base font-black text-white disabled:cursor-not-allowed disabled:bg-slate-500"
+                      className="min-h-[54px] flex-1 rounded-2xl bg-black px-5 py-3 text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
                     >
-                      {spinning ? "回転中..." : "大罰ゲームルーレットを回す"}
+                      {spinning ? "回転中..." : "回す"}
                     </button>
                     <button
                       onClick={() => {
                         setScreen("main");
                         setResult("");
                       }}
-                      className="min-h-[54px] rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-base font-bold"
+                      className="min-h-[54px] rounded-2xl border border-gray-300 bg-white px-5 py-3 text-base font-semibold"
                     >
                       戻る
                     </button>
-                  </>
-                )}
-              </div>
-
-              <div className="mt-4 w-full max-w-xl rounded-2xl border border-white/10 bg-white/10 p-4 text-sm leading-6 text-slate-200">
-                {screen === "main" ? (
-                  <>
-                    <p>通常ルーレットの条件</p>
-                    <p>・選択肢はちょうど4つ必要</p>
-                    <p>・大罰ゲーム行きのマスは1つだけ必要</p>
-                    <p className="mt-2 font-semibold text-white">
-                      現在: {mainOptions.length}/4、 大罰ゲーム行き: {mainBossCount}個
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p>大罰ゲームルーレットの条件</p>
-                    <p>・選択肢は2つ以上必要</p>
-                    <p className="mt-2 font-semibold text-white">現在: {bigOptions.length}個</p>
                   </>
                 )}
               </div>
@@ -668,13 +611,13 @@ export default function Page() {
           </section>
 
           <section className="space-y-6">
-            <div className="rounded-3xl border border-white/10 bg-white/10 p-4 shadow-xl backdrop-blur sm:p-6">
+            <div className="rounded-3xl bg-white p-4 shadow-xl sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl font-black">通常ルーレット設定</h2>
+                <h2 className="text-xl font-bold">通常</h2>
                 <button
                   onClick={addMainOption}
                   disabled={mainOptions.length >= 4}
-                  className="min-h-[44px] rounded-xl bg-amber-400 px-4 py-2 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-500"
+                  className="min-h-[44px] rounded-xl bg-black px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
                 >
                   追加
                 </button>
@@ -682,12 +625,12 @@ export default function Page() {
 
               <div className="mt-4 space-y-3">
                 {mainOptions.map((option, index) => (
-                  <div key={option.id} className="rounded-2xl border border-white/10 bg-white/10 p-3">
+                  <div key={option.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="text-sm font-bold text-slate-100">選択肢 {index + 1}</span>
+                      <span className="text-sm font-bold text-gray-700">選択肢 {index + 1}</span>
                       <button
                         onClick={() => deleteMainOption(option.id)}
-                        className="min-h-[40px] rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-bold"
+                        className="min-h-[40px] rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold"
                       >
                         削除
                       </button>
@@ -696,19 +639,19 @@ export default function Page() {
                     <input
                       value={option.text}
                       onChange={(e) => updateMainText(option.id, e.target.value)}
-                      placeholder="選択肢を入力"
-                      className="min-h-[48px] w-full rounded-xl border border-white/20 bg-slate-950/40 px-4 py-3 text-base text-white outline-none placeholder:text-slate-400 focus:border-amber-300"
+                      placeholder="入力"
+                      className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-500"
                     />
 
                     <div className="mt-3">
-                      <label className="flex min-h-[44px] items-center gap-2 rounded-xl bg-slate-950/40 px-3 py-2">
+                      <label className="flex min-h-[44px] items-center gap-2 rounded-xl bg-white px-3 py-2">
                         <input
                           type="radio"
                           name="boss-option"
                           checked={option.isBoss}
                           onChange={() => setBossOption(option.id)}
                         />
-                        <span className="text-sm font-medium text-slate-100">このマスを「大罰ゲーム行き」にする</span>
+                        <span className="text-sm font-medium text-gray-800">大罰ゲーム行き</span>
                       </label>
                     </div>
                   </div>
@@ -716,12 +659,12 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/10 p-4 shadow-xl backdrop-blur sm:p-6">
+            <div className="rounded-3xl bg-white p-4 shadow-xl sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl font-black">大罰ゲーム設定</h2>
+                <h2 className="text-xl font-bold">大罰ゲーム</h2>
                 <button
                   onClick={addBigOption}
-                  className="min-h-[44px] rounded-xl bg-rose-500 px-4 py-2 text-sm font-black text-white"
+                  className="min-h-[44px] rounded-xl bg-black px-4 py-2 text-sm font-bold text-white"
                 >
                   追加
                 </button>
@@ -729,12 +672,12 @@ export default function Page() {
 
               <div className="mt-4 space-y-3">
                 {bigOptions.map((option, index) => (
-                  <div key={option.id} className="rounded-2xl border border-white/10 bg-white/10 p-3">
+                  <div key={option.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="text-sm font-bold text-slate-100">大罰ゲーム {index + 1}</span>
+                      <span className="text-sm font-bold text-gray-700">選択肢 {index + 1}</span>
                       <button
                         onClick={() => deleteBigOption(option.id)}
-                        className="min-h-[40px] rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-bold"
+                        className="min-h-[40px] rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold"
                       >
                         削除
                       </button>
@@ -743,27 +686,12 @@ export default function Page() {
                     <input
                       value={option.text}
                       onChange={(e) => updateBigText(option.id, e.target.value)}
-                      placeholder="大罰ゲーム内容を入力"
-                      className="min-h-[48px] w-full rounded-xl border border-white/20 bg-slate-950/40 px-4 py-3 text-base text-white outline-none placeholder:text-slate-400 focus:border-rose-300"
+                      placeholder="入力"
+                      className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-500"
                     />
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/10 p-4 shadow-xl backdrop-blur sm:p-6">
-              <h2 className="text-xl font-black">便利操作</h2>
-              <div className="mt-4 grid gap-3">
-                <button
-                  onClick={resetAll}
-                  className="min-h-[48px] w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-base font-bold"
-                >
-                  初期状態に戻す
-                </button>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-200">
-                候補と音設定はブラウザに保存されます。スマホで何度も使う前提の作りです。
-              </p>
             </div>
           </section>
         </div>
